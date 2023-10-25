@@ -54,4 +54,11 @@ public class UserController {
         List<UserWithDepartment> users = userRepository.findUsersByNameAndAge(name, age);
         return ResponseEntity.ok(users);
     }
+    @GetMapping("/new2")
+    public ResponseEntity<?> find2(@RequestParam int minAge, @RequestParam int maxAge){
+        log.info("\n---------------------------------------------------------------------------&gt;\n");
+        log.info("[GET] ['{}']", ServletUriComponentsBuilder.fromCurrentRequest().build());
+        List<UserWithDepartment> users = userRepository.findUsersInAgeRangeWithField(minAge, maxAge);
+        return ResponseEntity.ok(users);
+    }
 }

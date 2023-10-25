@@ -78,6 +78,21 @@ public class UserRepositoryImpl implements IUserRepository {
 
         return results.getMappedResults();
     }
+    public List<UserWithDepartment> findUsersInAgeRangeWithField(int minAge, int maxAge) {
+        AggregationOperation convertDepartmentIdToObjectId = mongoTemplateCommon.buildConvertToObjectId("departmentId");
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("age").gte(minAge).lte(maxAge)),
+                convertDepartmentIdToObjectId,
+                LookupOperation.newLookup()
+                        .from("department")
+                        .localField("departmentId")
+                        .foreignField("_id")
+                        .as("departments")
+        );
+
+        AggregationResults<UserWithDepartment> results = mongoTemplate.aggregate(aggregation, "user", UserWithDepartment.class);
+        return results.getMappedResults();
+    }
 //    private AggregationOperation buildConvertToObjectId(String fieldToConvert) {
 //        return new AggregationOperation() {
 //            @Override
