@@ -47,4 +47,11 @@ public class UserController {
         List<UserWithDepartment> users = userRepository.findUsersWithDepartments();
         return ResponseEntity.ok(users);
     }
+    @GetMapping("/new1")
+    public ResponseEntity<?> find1(@RequestParam String name, @RequestParam int age){
+        log.info("\n---------------------------------------------------------------------------&gt;\n");
+        log.info("[GET] ['{}']", ServletUriComponentsBuilder.fromCurrentRequest().build());
+        List<UserWithDepartment> users = userRepository.findUsersByNameAndAge(name, age);
+        return ResponseEntity.ok(users);
+    }
 }

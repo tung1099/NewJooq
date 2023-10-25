@@ -1,5 +1,6 @@
 package com.example.demo.repository.impl;
 
+import com.example.demo.common.MongoTemplateCommon;
 import com.example.demo.model.User;
 import com.example.demo.model.UserWithDepartment;
 import com.example.demo.repository.IUserRepository;
@@ -26,6 +27,9 @@ import java.util.List;
 public class UserRepositoryImpl implements IUserRepository {
 
     @Autowired
+    MongoTemplateCommon mongoTemplateCommon;
+
+    @Autowired
     MongoTemplate mongoTemplate;
     @Override
     public List<User> findAll() {
@@ -44,15 +48,7 @@ public class UserRepositoryImpl implements IUserRepository {
         return mongoTemplate.find(query, User.class);
     }
     public List<UserWithDepartment> findUsersWithDepartments() {
-        AggregationOperation convertDepartmentIdToObjectId = new AggregationOperation() {
-            @Override
-            public Document toDocument(AggregationOperationContext context) {
-                return new Document("$addFields",
-                        new Document("departmentId",
-                                new Document("$toObjectId", "$departmentId")));
-            }
-        };
-
+        AggregationOperation convertDepartmentIdToObjectId = mongoTemplateCommon.buildConvertToObjectId("departmentId");
         Aggregation aggregation = Aggregation.newAggregation(
                 convertDepartmentIdToObjectId,
                 LookupOperation.newLookup()
@@ -61,9 +57,35 @@ public class UserRepositoryImpl implements IUserRepository {
                         .foreignField("_id")
                         .as("departments")
         );
-
         AggregationResults<UserWithDepartment> results = mongoTemplate.aggregate(aggregation, "user", UserWithDepartment.class);
         return results.getMappedResults();
     }
 
+    public List<UserWithDepartment> findUsersByNameAndAge(String name, int age) {
+        AggregationOperation convertDepartmentIdToObjectId = mongoTemplateCommon.buildConvertToObjectId("departmentId");
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("name").is(name).and("age").gt(age)),
+                        convertDepartmentIdToObjectId,
+                        LookupOperation.newLookup()
+                                .from("department")
+                                .localField("departmentId")
+                                .foreignField("_id")
+                                .as("departments")
+
+        );
+
+        AggregationResults<UserWithDepartment> results = mongoTemplate.aggregate(aggregation, "user", UserWithDepartment.class);
+
+        return results.getMappedResults();
+    }
+//    private AggregationOperation buildConvertToObjectId(String fieldToConvert) {
+//        return new AggregationOperation() {
+//            @Override
+//            public Document toDocument(AggregationOperationContext context) {
+//                return new Document("$addFields",
+//                        new Document(fieldToConvert,
+//                                new Document("$toObjectId", "$" + fieldToConvert)));
+//            }
+//        };
+//    }
 }
